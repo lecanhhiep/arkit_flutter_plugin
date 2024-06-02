@@ -181,7 +181,7 @@ class _ARKitSceneViewState extends State<ARKitSceneView> {
   }
 
   Future<void> onPlatformViewCreated(int id) async {
-    widget.onARKitViewCreated(ARKitController._init(
+    final controller = await ARKitController._init(
       id,
       widget.configuration,
       widget.environmentTexturing,
@@ -202,7 +202,8 @@ class _ARKitSceneViewState extends State<ARKitSceneView> {
       widget.forceUserTapOnCenter,
       widget.maximumNumberOfTrackedImages,
       widget.debug,
-    ));
+    );
+    widget.onARKitViewCreated(controller);
   }
 }
 
@@ -211,7 +212,14 @@ class _ARKitSceneViewState extends State<ARKitSceneView> {
 /// An [ARKitController] instance can be obtained by setting the [ARKitSceneView.onARKitViewCreated]
 /// callback for an [ARKitSceneView] widget.
 class ARKitController {
-  ARKitController._init(
+  ARKitController._(
+    this.debug,
+    this._channel,
+  ) {
+    _channel.setMethodCallHandler(_platformCallHandler);
+  }
+
+  static Future<ARKitController> _init(
     int id,
     ARKitConfiguration configuration,
     ARWorldTrackingConfigurationEnvironmentTexturing environmentTexturing,
@@ -231,11 +239,10 @@ class ARKitController {
     List<ARKitReferenceImage>? trackingImages,
     bool forceUserTapOnCenter,
     int maximumNumberOfTrackedImages,
-    this.debug,
-  ) {
-    _channel = MethodChannel('arkit_$id');
-    _channel.setMethodCallHandler(_platformCallHandler);
-    _channel.invokeMethod<void>('init', {
+    bool debug,
+  ) async {
+    final channel = MethodChannel('arkit_$id');
+    await channel.invokeMethod<void>('init', {
       'configuration': configuration.index,
       'environmentTexturing': environmentTexturing.index,
       'showStatistics': showStatistics,
@@ -255,9 +262,10 @@ class ARKitController {
       'worldAlignment': worldAlignment.index,
       'maximumNumberOfTrackedImages': maximumNumberOfTrackedImages,
     });
+    return ARKitController._(debug, channel);
   }
 
-  late MethodChannel _channel;
+  final MethodChannel _channel;
 
   /// This is called when a session fails.
   /// On failure the session will be paused.
@@ -316,9 +324,7 @@ class ARKitController {
   static const _stateConverter = ARTrackingStateConverter();
   static const _stateReasonConverter = ARTrackingStateReasonConverter();
 
-  void dispose() {
-    _channel.invokeMethod<void>('dispose');
-  }
+  Future<void> dispose() => _channel.invokeMethod<void>('dispose');
 
   Future<void> add(ARKitNode node, {String? parentNodeName}) {
     final params = _addParentNodeNameToParams(node.toMap(), parentNodeName);
@@ -386,12 +392,11 @@ class ARKitController {
   }
 
   /// Updates the geometry with the vertices of a face geometry.
-  void updateFaceGeometry(ARKitNode node, String fromAnchorId) {
-    _channel.invokeMethod<void>(
-        'updateFaceGeometry',
-        _getHandlerParams(
-            node, 'geometry', <String, dynamic>{'fromAnchorId': fromAnchorId}));
-  }
+  Future<void> updateFaceGeometry(ARKitNode node, String fromAnchorId) =>
+      _channel.invokeMethod<void>(
+          'updateFaceGeometry',
+          _getHandlerParams(node, 'geometry',
+              <String, dynamic>{'fromAnchorId': fromAnchorId}));
 
   Future<Vector3?> projectPoint(Vector3 point) async {
     final projectPoint = await _channel.invokeListMethod<double>(
@@ -725,10 +730,14 @@ class ARKitController {
   }
 
   Map<String, dynamic> _getHandlerParams(
-      ARKitNode node, String paramName, dynamic params) {
-    final values = <String, dynamic>{'name': node.name}
-      ..addAll({paramName: params});
-    return values;
+    ARKitNode node,
+    String paramName,
+    dynamic params,
+  ) {
+    return <String, dynamic>{
+      'name': node.name,
+      paramName: params,
+    };
   }
 
   Future<Vector3> getCameraEulerAngles() async {
