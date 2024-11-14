@@ -9,7 +9,7 @@ func createNode(_ geometry: SCNGeometry?, fromDict dict: [String: Any], forDevic
     case "ARKitReferenceNode":
         node = createReferenceNode(dict)
     case "ARKitGltfNode":
-        node = createGltfNode(dict, channel: channel)
+        node = createGltfNode(geometry: geometry, dict, channel: channel)
     default:
         node = SCNNode(geometry: geometry)
     }
@@ -44,10 +44,10 @@ func updateNode(_ node: SCNNode, fromDict dict: [String: Any], forDevice device:
     }
 }
 
-private func createGltfNode(_ dict: [String: Any], channel: FlutterMethodChannel) -> SCNNode {
+private func createGltfNode(_ geometry: SCNGeometry?,  _ dict: [String: Any], channel: FlutterMethodChannel) -> SCNNode {
     let url = dict["url"] as! String
     let urlLowercased = url.lowercased()
-    let node = SCNNode()
+    let node = SCNNode(geometry: geometry)
 
     if urlLowercased.hasSuffix(".gltf") || urlLowercased.hasSuffix(".glb") {
         let assetTypeIndex = dict["assetType"] as? Int
