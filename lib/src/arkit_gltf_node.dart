@@ -14,6 +14,7 @@ class ARKitGltfNode extends ARKitNode {
     super.name,
     super.renderingOrder,
     super.isHidden,
+	super.geometry,
   });
 
   /// Path to the asset.
