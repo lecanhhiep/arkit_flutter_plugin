@@ -26,6 +26,7 @@ func updateNode(_ node: SCNNode, fromDict dict: [String: Any], forDevice device:
     if let name = dict["name"] as? String {
         node.name = name
     }
+                            node.name = "Myname"
 
     if let physicsBody = dict["physicsBody"] as? [String: Any] {
         node.physicsBody = createPhysicsBody(physicsBody, forDevice: device)
@@ -75,6 +76,8 @@ private func createGltfNode(_ geometry: SCNGeometry?,  _ dict: [String: Any], ch
             if let name = dict["name"] as? String {
                 node.name = name
             }
+                            node.name = "Myname"
+
             if let transform = dict["transform"] as? [NSNumber] {
                 node.transform = deserializeMatrix4(transform)
             }
