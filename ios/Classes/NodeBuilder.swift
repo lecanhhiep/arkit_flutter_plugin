@@ -9,7 +9,7 @@ func createNode(_ geometry: SCNGeometry?, fromDict dict: [String: Any], forDevic
     case "ARKitReferenceNode":
         node = createReferenceNode(dict)
     case "ARKitGltfNode":
-        node = createGltfNode(geometry: geometry, dict, channel: channel)
+        node = createGltfNode(geometry, dict, channel: channel)
     default:
         node = SCNNode(geometry: geometry)
     }
